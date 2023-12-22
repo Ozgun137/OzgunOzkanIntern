@@ -21,13 +21,13 @@ import com.glassdoor.intern.presentation.MainUiState.PartialState.ShowLoadingSta
 import com.glassdoor.intern.presentation.MainUiState.PartialState.UpdateErrorMessageState
 import com.glassdoor.intern.presentation.MainUiState.PartialState.UpdateHeaderState
 import com.glassdoor.intern.presentation.MainUiState.PartialState.UpdateItemsState
+import com.glassdoor.intern.presentation.mapper.HeaderUiModelMapper
 import com.glassdoor.intern.presentation.mapper.ItemUiModelMapper
 import com.glassdoor.intern.utils.presentation.UiStateMachine
 import com.glassdoor.intern.utils.presentation.UiStateMachineFactory
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
 import timber.log.Timber
@@ -36,7 +36,7 @@ import javax.inject.Inject
 internal interface IMainViewModel : UiStateMachine<MainUiState, PartialState, MainIntent>
 
 /**
- * TODO: Inject the correct header mapper dependency
+ * DONE: Inject the correct header mapper dependency
  */
 @HiltViewModel
 internal class MainViewModel @Inject constructor(
@@ -44,31 +44,39 @@ internal class MainViewModel @Inject constructor(
     uiStateMachineFactory: UiStateMachineFactory,
     private val getHeaderInfoUseCase: GetHeaderInfoUseCase,
     private val itemUiModelMapper: ItemUiModelMapper,
+    private val headerUiModelMapper: HeaderUiModelMapper
 ) : ViewModel(), IMainViewModel {
 
     /**
-     * TODO: Define the correct methods as callbacks
+     * DONE: Define the correct methods as callbacks
      */
     private val uiStateMachine: UiStateMachine<MainUiState, PartialState, MainIntent> =
         uiStateMachineFactory.create(
             defaultUiState = defaultUiState,
-            errorTransform = { emptyFlow() },
-            intentTransform = { emptyFlow() },
-            updateUiState = { s, _ -> s },
+            errorTransform = { throwable -> errorTransform(throwable) },
+            intentTransform = { intent -> intentTransform(intent) },
+            updateUiState = { previousUiState, partialState ->
+                updateUiState(previousUiState, partialState)
+            },
         )
 
     override val uiState: StateFlow<MainUiState> = uiStateMachine.uiState
 
     init {
         /**
-         * TODO: Refresh the screen only when the header is empty
+         * DONE: Refresh the screen only when the header is empty
          */
+        if (uiState.value.header.isEmpty) {
+            acceptIntent(RefreshScreen)
+        }
     }
 
     /**
-     * TODO: Delegate method to [uiStateMachine]
+     * DONE: Delegate method to [uiStateMachine]
      */
-    override fun acceptIntent(intent: MainIntent) = Unit
+    override fun acceptIntent(intent: MainIntent) {
+        uiStateMachine.acceptIntent(intent)
+    }
 
     private fun errorTransform(throwable: Throwable): Flow<PartialState> = flow {
         Timber.e(throwable, "MainViewModel")
@@ -89,17 +97,25 @@ internal class MainViewModel @Inject constructor(
         previousUiState: MainUiState,
         partialState: PartialState,
     ): MainUiState = when (partialState) {
-        HideLoadingState, ShowLoadingState -> {
-            /**
-             * TODO: Separate handling and update correct properties [previousUiState]
-             */
-            previousUiState
+        /**
+         * DONE: Separate handling and update correct properties [previousUiState]
+         */
+        is HideLoadingState -> {
+            previousUiState.copy(
+                isLoading = false
+            )
+        }
+
+        is ShowLoadingState -> {
+            previousUiState.copy(
+                isLoading = true
+            )
         }
 
         is UpdateErrorMessageState -> with(partialState) {
             previousUiState.copy(
                 errorMessage = errorMessage,
-                items = if (errorMessage.isNullOrEmpty()) previousUiState.items else emptyList(),
+                items = previousUiState.items //I changed this part to keep the previous list even if an error occurs
             )
         }
 
@@ -121,10 +137,11 @@ internal class MainViewModel @Inject constructor(
         getHeaderInfoUseCase()
             .onSuccess { headerInfo ->
                 /**
-                 * TODO: Transform the header domain model to the UI model
-                 * TODO: Emit the transformed UI model as state
+                 * DONE: Transform the header domain model to the UI model
+                 * DONE: Emit the transformed UI model as state
                  */
-
+                val headerInfoUIModel = headerUiModelMapper.toUiModel(headerInfo)
+                emit(UpdateHeaderState(headerInfoUIModel))
                 emit(UpdateItemsState(headerInfo.items.map(itemUiModelMapper::toUiModel)))
             }
             .onFailure { throwable ->
