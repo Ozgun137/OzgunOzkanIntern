@@ -17,7 +17,9 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
@@ -34,12 +36,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.rememberVectorPainter
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.tooling.preview.PreviewParameterProvider
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
+import coil.request.ImageRequest
 import com.glassdoor.intern.presentation.model.HeaderUiModel
 import com.glassdoor.intern.presentation.model.ItemUiModel
 import com.glassdoor.intern.presentation.theme.InternTheme
@@ -69,9 +73,13 @@ internal fun ContentComponent(
         verticalArrangement = Arrangement.spacedBy(InternTheme.dimensions.double),
     ) {
         /**
-         * TODO: Specify the [item key](https://developer.android.com/jetpack/compose/lists#item-keys) and [content type](https://developer.android.com/jetpack/compose/lists#content-type)
+         * DONE: Specify the [item key](https://developer.android.com/jetpack/compose/lists#item-keys) and [content type](https://developer.android.com/jetpack/compose/lists#content-type)
          */
         items(
+            key = {
+                it.key
+            },
+            contentType = { it },
             items = items,
             itemContent = { item -> ItemComponent(item) },
         )
@@ -92,19 +100,44 @@ private fun HeaderComponent(
     Card(
         border = BorderStroke(
             width = headerBorderStrokeWidth,
-            color = MaterialTheme.colorScheme.primary
+            color = MaterialTheme.colorScheme.primary,
         )
     ) {
         with(header) {
             /**
-             * TODO: [Declare the UI](https://developer.android.com/codelabs/jetpack-compose-basics#5) based on the UI model structure
+             * DONE: [Declare the UI](https://developer.android.com/codelabs/jetpack-compose-basics#5) based on the UI model structure
              */
+
+            Column( modifier = Modifier.padding(InternTheme.dimensions.double),) {
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(InternTheme.dimensions.double),
+                ){
+                    Text(
+                        modifier = Modifier.weight(1F),
+                        text = headerTitle,
+                        style = MaterialTheme.typography.titleSmall,
+                    )
+
+                    Text(
+                        text = headerTimeStamp,
+                        style = MaterialTheme.typography.labelSmall,
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(InternTheme.dimensions.double))
+
+                Text(
+                    text = headerDescription,
+                    style = MaterialTheme.typography.bodySmall,
+                )
+            }
         }
     }
 }
 
 @Composable
-private fun ItemComponent(item: ItemUiModel) = Card {
+private fun ItemComponent(item: ItemUiModel) =
+    Card {
     with(item) {
         Row(
             modifier = Modifier.padding(InternTheme.dimensions.double),
@@ -142,7 +175,11 @@ private fun ItemComponent(item: ItemUiModel) = Card {
                 contentDescription = title,
                 contentScale = ContentScale.Crop,
                 error = rememberVectorPainter(Icons.Default.Warning),
-                model = TODO("[Request an image download](https://github.com/coil-kt/coil#requests)"),
+                //DONE("[Request an image download](https://github.com/coil-kt/coil#requests)")
+                model = ImageRequest.Builder(LocalContext.current)
+                    .data(imageUrl)
+                    .crossfade(true)
+                    .build(),
             )
         }
     }
@@ -182,12 +219,38 @@ private typealias HeaderAndItems = Pair<HeaderUiModel, List<ItemUiModel>>
 
 private class ContentComponentPreviewParameterProvider :
     PreviewParameterProvider<HeaderAndItems> by previewParameterProviderOf(
-        TODO("Define UI models for preview purposes")
+        // DONE("Define UI models for preview purposes")
+        Pair(
+            HeaderUiModel(
+                headerTitle = "Header Title",
+                headerDescription = "Header Description",
+                headerTimeStamp = "12/21/2023"
+            ),
+            listOf(
+                ItemUiModel(
+                    title = "Item 1",
+                    description = "Description 1",
+                    imageUrl = "",
+                    timestamp = "12/21/2023"
+                ),
+                ItemUiModel(
+                    title = "Item 2",
+                    description = "Description 2",
+                    imageUrl = "",
+                    timestamp = "12/21/2023"
+                ),
+            )
+        )
     )
 
 private class HeaderComponentPreviewParameterProvider :
     PreviewParameterProvider<HeaderUiModel> by previewParameterProviderOf(
-        TODO("Define UI models for preview purposes")
+        // DONE("Define UI models for preview purposes")
+        HeaderUiModel(
+            headerTitle = "Header Title",
+            headerDescription = "Header Description",
+            headerTimeStamp = "12/21/2023"
+        )
     )
 
 private class ItemComponentPreviewParameterProvider :
