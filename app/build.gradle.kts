@@ -77,7 +77,12 @@ dependencies {
     implementation("androidx.compose.ui:ui")
     implementation("androidx.compose.ui:ui-graphics")
     implementation("androidx.compose.material3:material3")
-    implementation("androidx.compose.ui:ui-tooling-preview")
+
+    /*I was getting an error as: androidx.compose.ui.tooling.preview.ComposeViewAdapter
+    can not be found when I was trying to preview composables. That's why I needed to
+    change this dependency.
+    */
+    implementation("androidx.compose.ui:ui-tooling:1.5.4")
     implementation(platform("androidx.compose:compose-bom:2023.03.00"))
 
     ksp("com.google.dagger:hilt-android-compiler:2.48.1")
